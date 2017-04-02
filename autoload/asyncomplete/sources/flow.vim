@@ -8,10 +8,13 @@ function! asyncomplete#sources#flow#completor(opt, ctx) abort
 
     let l:tempfile = s:write_buffer_to_tempfile(a:ctx)
 
+    let l:config = get(a:opt, 'config', {})
+    let l:flowbin_path = get(l:config, 'flowbin_path', 'flow')
+
     if has('win32') || has('win64')
-        let l:cmd = ['cmd', '/c', 'cd "' . expand('%:p:h') . '" && flow autocomplete --json "' . l:file . '" < "' . l:tempfile . '"']
+        let l:cmd = ['cmd', '/c', 'cd "' . expand('%:p:h') . '" && ' . l:flowbin_path . ' autocomplete --json "' . l:file . '" < "' . l:tempfile . '"']
     else
-        let l:cmd = ['sh', '-c', 'cd "' . expand('%:p:h') . '" && flow autocomplete --json "' . l:file . '" < "' . l:tempfile . '"']
+        let l:cmd = ['sh', '-c', 'cd "' . expand('%:p:h') . '" && ' . l:flowbin_path . ' autocomplete --json "' . l:file . '" < "' . l:tempfile . '"']
     endif
 
     let l:jobid = async#job#start(l:cmd, {

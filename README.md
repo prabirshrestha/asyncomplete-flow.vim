@@ -21,9 +21,13 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
     \ 'name': 'flow',
     \ 'whitelist': ['javascript'],
     \ 'completor': function('asyncomplete#sources#flow#completor'),
+    \ 'config': {
+    \    'flowbin_path': expand('~/bin/flow')
+    \  },
     \ }))
 ```
 
-`flow` binary should exist in the `PATH`.
+Note: `config` is optional. `flowbin_path` defaults to `flow`
+i.e., `flow` binary should exist in the `PATH` if config is not specified.
 
 Also make sure your javascript project is correctly initialized with `.flowconfig`.
