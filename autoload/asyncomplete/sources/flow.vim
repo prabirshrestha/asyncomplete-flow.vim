@@ -9,9 +9,9 @@ function! asyncomplete#sources#flow#completor(opt, ctx) abort
     let l:tempfile = s:write_buffer_to_tempfile(a:ctx)
 
     if has('win32') || has('win64')
-        let l:cmd = ['cmd', '/c', 'cd ' . expand('%:p:h') . ' && flow autocomplete --json ' . l:file . ' < ' . l:tempfile]
+        let l:cmd = ['cmd', '/c', 'cd "' . expand('%:p:h') . '" && flow autocomplete --json "' . l:file . '" < "' . l:tempfile . '"']
     else
-        let l:cmd = ['sh', '-c', 'cd ' . expand('%:p:h') . ' && flow autocomplete --json ' . l:file . ' < ' . l:tempfile]
+        let l:cmd = ['sh', '-c', 'cd "' . expand('%:p:h') . '" && flow autocomplete --json "' . l:file . '" < "' . l:tempfile . '"']
     endif
 
     let l:jobid = async#job#start(l:cmd, {
@@ -39,7 +39,6 @@ function! s:handler(id, data, event) abort
             call delete(l:job['tempfile'])
             if a:data == 0
                 let l:res = json_decode(l:job['buffer'])
-                call asyncomplete#log('flow', l:res)
                 if !empty(l:res) && !empty(l:res['result'])
                     let l:matches = map(l:res['result'], '{"word": v:val["name"], "dup": 1, "icase": 1, "menu": "[Flow]"}')
 
@@ -50,7 +49,6 @@ function! s:handler(id, data, event) abort
                     let l:kwlen = len(l:kw)
                     let l:startcol = l:col - l:kwlen
 
-                    call asyncomplete#log(l:job['opt']['name'], l:startcol, l:matches, l:ctx)
                     call asyncomplete#complete(l:job['opt']['name'], l:ctx, l:startcol, l:matches)
                 endif
             endif
@@ -73,8 +71,6 @@ function! s:write_buffer_to_tempfile(ctx) abort
     " Insert the base and magic token into the current line.
     let l:curline = l:lines[l:lnum - 1]
     let l:lines[l:lnum - 1] = l:curline[:l:lnum - 1] . s:autotok . l:curline[l:lnum :]
-
-    call asyncomplete#log(l:lines[l:lnum -1])
 
     let l:file = tempname()
     call writefile(l:lines, l:file)
