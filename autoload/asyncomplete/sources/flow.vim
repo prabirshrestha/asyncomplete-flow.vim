@@ -73,7 +73,7 @@ function! s:write_buffer_to_tempfile(ctx) abort
 
     " Insert the base and magic token into the current line.
     let l:curline = l:lines[l:lnum - 1]
-    let l:lines[l:lnum - 1] = l:curline[:l:lnum - 1] . s:autotok . l:curline[l:lnum :]
+    let l:lines[l:lnum - 1] = l:curline[:l:col - 1] . s:autotok . l:curline[l:col:]
 
     let l:file = tempname()
     call writefile(l:lines, l:file)
