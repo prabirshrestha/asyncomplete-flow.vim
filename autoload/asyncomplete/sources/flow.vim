@@ -1,6 +1,6 @@
 let s:is_win = has('win32') || has('win64')
 let s:autotok = 'AUTO332'
-let s:jobs = {} " jobid: { buffer, tempfile, ctx, opt }
+
 function! asyncomplete#sources#flow#completor(opt, ctx) abort
     let l:file = a:ctx['filepath']
     if empty(l:file)
@@ -22,46 +22,42 @@ function! asyncomplete#sources#flow#completor(opt, ctx) abort
         let l:cmd = ['sh', '-c', 'cd "' . expand('%:p:h') . '" && ' . l:flowbin_path . ' autocomplete --json "' . l:file . '" < "' . l:tempfile . '"']
     endif
 
+    let l:params = { 'stdout_buffer': '', 'file': l:tempfile }
+
     let l:jobid = async#job#start(l:cmd, {
-        \ 'on_stdout': function('s:handler'),
-        \ 'on_exit': function('s:handler'),
+        \ 'on_stdout': function('s:handler', [a:opt, a:ctx, l:params]),
+        \ 'on_stderr': function('s:handler', [a:opt, a:ctx, l:params]),
+        \ 'on_exit': function('s:handler', [a:opt, a:ctx, l:params]),
         \ })
 
     call asyncomplete#log(l:cmd, l:jobid, l:tempfile)
 
-    if l:jobid > 0
-        let s:jobs[l:jobid] = { 'buffer': '', 'tempfile': l:tempfile, 'ctx': a:ctx, 'opt': a:opt }
-    else
+    if l:jobid <= 0
         call delete(l:tempfile)
     endif
 endfunction
 
-function! s:handler(id, data, event) abort
-    if a:event == 'stdout'
-        if has_key(s:jobs, a:id)
-            let s:jobs[a:id]['buffer'] = s:jobs[a:id]['buffer'] . join(a:data, "\n")
-        endif
-    elseif a:event == 'exit'
-        if has_key(s:jobs, a:id)
-            let l:job = s:jobs[a:id]
-            call delete(l:job['tempfile'])
-            if a:data == 0
-                let l:res = json_decode(l:job['buffer'])
-                if !empty(l:res) && !empty(l:res['result'])
-                    let l:matches = map(l:res['result'], '{"word": v:val["name"], "dup": 1, "icase": 1, "menu": "[Flow]"}')
+function! s:handler(opt, ctx, params, id, data, event) abort
+    if a:event ==? 'stdout'
+        let a:params['stdout_buffer'] = a:params['stdout_buffer'] . join(a:data, "\n")
+    elseif a:event ==? 'exit'
+        if a:data == 0
+            let l:res = json_decode(a:params['stdout_buffer'])
+            if !empty(l:res) && !empty(l:res['result'])
+                let l:matches = map(l:res['result'], '{"word": v:val["name"], "dup": 1, "icase": 1, "menu": "[Flow]"}')
 
-                    let l:ctx = l:job['ctx']
-                    let l:col = l:ctx['col']
-                    let l:typed = l:ctx['typed']
-                    let l:kw = matchstr(l:typed, '\w\+$')
-                    let l:kwlen = len(l:kw)
-                    let l:startcol = l:col - l:kwlen
+                let l:col = a:ctx['col']
+                let l:typed = a:ctx['typed']
+                let l:kw = matchstr(l:typed, '\w\+$')
+                let l:kwlen = len(l:kw)
+                let l:startcol = l:col - l:kwlen
 
-                    call asyncomplete#complete(l:job['opt']['name'], l:ctx, l:startcol, l:matches)
-                endif
+                call asyncomplete#complete(a:opt['name'], a:ctx, l:startcol, l:matches)
             endif
-            unlet s:jobs[a:id]
         endif
+        call delete(a:params['file'])
+    elseif a:event ==? 'stdout'
+        call asyncomplete#log(a:data)
     endif
 endfunction
 
