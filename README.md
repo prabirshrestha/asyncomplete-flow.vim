@@ -28,6 +28,9 @@ au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#source
     \    'prefer_local': 1,
     \    " Path to 'flow' executable.
     \    'flowbin_path': expand('~/bin/flow'),
+    \    " Displays additional typeinfo exposed by flow, if any is provided. 
+    \    " Defaults to 0.
+    \    'show_typeinfo': 1
     \  },
     \ }))
 ```

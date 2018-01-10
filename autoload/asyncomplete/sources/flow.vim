@@ -44,7 +44,15 @@ function! s:handler(opt, ctx, params, id, data, event) abort
         if a:data == 0
             let l:res = json_decode(a:params['stdout_buffer'])
             if !empty(l:res) && !empty(l:res['result'])
-                let l:matches = map(l:res['result'], '{"word": v:val["name"], "dup": 1, "icase": 1, "menu": "[Flow]"}')
+
+                let l:config = get(a:opt, 'config', {})
+                if get(l:config, 'show_typeinfo', 0)
+                    let l:mapper = '{"word": v:val["name"], "dup": 1, "icase": 1, "menu": "[Flow]    " . v:val["type"]}'
+                else
+                    let l:mapper = '{"word": v:val["name"], "dup": 1, "icase": 1, "menu": "[Flow]"}'
+                endif
+
+                let l:matches = map(l:res['result'], l:mapper)
 
                 let l:col = a:ctx['col']
                 let l:typed = a:ctx['typed']
