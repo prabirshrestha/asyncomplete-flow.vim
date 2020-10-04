@@ -19,7 +19,7 @@ Plug 'prabirshrestha/asyncomplete-flow.vim'
 ```vim
 au User asyncomplete_setup call asyncomplete#register_source(asyncomplete#sources#flow#get_source_options({
     \ 'name': 'flow',
-    \ 'whitelist': ['javascript'],
+    \ 'allowlist': ['javascript'],
     \ 'completor': function('asyncomplete#sources#flow#completor'),
     \ 'config': {
     \    " Resolves 'flow' in the closest node_modules/.bin directory (in case
